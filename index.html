@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StackDonald 게임</title>
-    <!-- 부트스트랩 링크 추가 -->
+    <!-- 부트스트랩 링크 -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- 내부 CSS -->
     <style>
@@ -41,18 +41,17 @@
 </head>
 <body>
 
-<!-- Hero 섹션 시작 -->
+<!-- Hero 섹션 -->
 <section class="hero-section text-center py-5">
     <div class="container">
         <!-- 제목 -->
         <h1 class="display-4">도전! 스택도날드(StackDonald)</h1>
         <!-- 소제목 -->
-        <p class="lead">스택(Stack)을 활용해서 맛있는 햄버거를 만들어봅시다!</p>
+        <p class="lead">주어진 재료 스택(Stack)을 활용해서 맛있는 햄버거를 만들어봅시다!</p>
         <!-- "만들어보자!" 버튼 -->
         <button id="start-game-btn" class="btn btn-primary">만들어보자!</button>
     </div>
 </section>
-<!-- Hero 섹션 끝 -->
 
 <!-- 순서 디스플레이 블록 -->
 <div id="order-display" class="order-display">
@@ -64,32 +63,26 @@
         <li>빵</li>
     </ul>
 </div>
-<!-- 순서 디스플레이 블록 끝 -->
 
 <!-- 재료 디스플레이 블록 -->
 <div id="ingredients-display" class="ingredients-display">
     <h3>주어진 재료</h3>
-    <ul>
-        <li>빵</li>
-        <li>야채</li>
-        <li>고기</li>
-        <li>빵</li>
-        <!-- 임의의 재료 표시 -->
-        <!-- 이 부분에 JavaScript를 사용하여 ingredients 배열을 기반으로 동적으로 표시할 수 있습니다. -->
-    </ul>
+    <!-- 재료 쌓기 및 이전 버튼 -->
+    <div class="text-center mt-3">
+        <button id="stack-ingredients-btn" class="btn btn-primary mr-2">재료 쌓기</button>
+        <button id="prev-ingredients-btn" class="btn btn-secondary">이전</button>
+    </div>
 </div>
-<!-- 재료 디스플레이 블록 끝 -->
 
 <!-- 햄버거 디스플레이 블록 -->
 <div id="burger-display" class="container text-center mt-5" style="display: none;">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <h2>햄버거</h2>
-            <!-- 이 부분에 햄버거를 표시할 요소를 추가할 수 있습니다. -->
+            <!-- 사용자가 직접 재료를 클릭 or 드래그하면서 햄버거를 만들 수 있도록 기능 추가 예정 -->
         </div>
     </div>
 </div>
-<!-- 햄버거 디스플레이 블록 끝 -->
 
 <!-- 버튼 그룹 -->
 <div id="button-group" class="container text-center mt-3" style="display: none;">
@@ -110,7 +103,6 @@
         </div>
     </div>
 </div>
-<!-- 버튼 그룹 끝 -->
 
 <!-- 부트스트랩 스크립트 추가 -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -175,7 +167,59 @@
         answer = solution(randomIngredients);
     });
 
-    // making() 함수 정의
+    // 폼 제출 시 이벤트 리스너
+    document.getElementById('burger-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // 기본 동작 취소
+
+        // 사용자 입력값 가져오기
+        const userInput = parseInt(document.getElementById('burger-input').value.trim());
+
+        // 정답과 비교
+        if (userInput === answer) {
+            // 정답일 경우 "정답!" 팝업 띄우기
+            alert('정답!');
+            if (answer === 0) {
+                // 정답값이 0인 경우 초기화하고 처음 페이지로 돌아가기
+                resetGame();
+            } else {
+                // 정답값이 0이 아닌 경우
+                // "햄버거를 클릭하여 만들어보세요!" 안내문구와 "제작" 버튼 표시
+                document.getElementById('burger-input').remove();
+                document.querySelector('label[for="burger-input"]').innerText = '햄버거를 클릭하여 만들어보세요!';
+                document.querySelector('button[type="submit"]').innerText = '제작';
+                // "다시하기" 버튼 표시
+                document.getElementById('reset-game-btn').style.display = 'inline-block';
+                // '재료 쌓기' 버튼과 '이전' 버튼 표시
+                document.getElementById('stack-ingredients-btn').style.display = 'inline-block';
+                document.getElementById('prev-ingredients-btn').style.display = 'inline-block';
+                }
+        } else {
+            // 오답일 경우 "오답!" 팝업 띄우기
+            alert('오답! 다시 생각해보세요!');
+        }
+    });
+
+    // "다시하기" 버튼 클릭 시 이벤트 리스너
+    document.getElementById('reset-game-btn').addEventListener('click', function() {
+        // 게임 초기화
+        resetGame();
+    });
+
+    // 게임 초기화 함수
+    function resetGame() {
+        // 페이지 초기화
+        document.getElementById('order-display').style.display = 'none';
+        document.getElementById('ingredients-display').style.display = 'none';
+        document.getElementById('burger-display').style.display = 'none';
+        document.getElementById('button-group').style.display = 'none';
+        document.getElementById('start-game-btn').style.display = 'inline-block';
+        // 입력값 초기화
+        document.getElementById('burger-input').value = '';
+        // "다시하기" 버튼 숨김
+        document.getElementById('reset-game-btn').style.display = 'none';
+    }
+
+    // 사용자가 직접 햄버거를 만들 수 있는 기능(함수로 정의함)
     function making() {
         // "주어진 재료" 메뉴의 각 재료 요소에 대해 drag 이벤트 리스너 추가
         const ingredientsListItems = document.querySelectorAll('#ingredients-display li');
@@ -207,56 +251,6 @@
     function dragStart(event) {
         event.dataTransfer.setData('text', event.target.id);
         event.target.style.display = 'none'; // 해당 재료 숨기기
-    }
-
-
-    // 폼 제출 시 이벤트 리스너
-    document.getElementById('burger-form').addEventListener('submit', function(event) {
-        event.preventDefault(); // 기본 동작 취소
-
-        // 사용자 입력값 가져오기
-        const userInput = parseInt(document.getElementById('burger-input').value.trim());
-
-        // 정답과 비교
-        if (userInput === answer) {
-            // 정답일 경우 "정답!" 팝업 띄우기
-            alert('정답!');
-            if (answer === 0) {
-                // 정답값이 0인 경우 초기화하고 처음 페이지로 돌아가기
-                resetGame();
-            } else {
-                // 정답값이 0이 아닌 경우 변동사항 적용
-                document.getElementById('burger-input').remove();
-                document.querySelector('label[for="burger-input"]').innerText = '햄버거를 클릭하여 만들어보세요!';
-                document.querySelector('button[type="submit"]').innerText = '제작';
-                // "다시하기" 버튼 표시
-                document.getElementById('reset-game-btn').style.display = 'inline-block';
-                making();
-            }
-        } else {
-            // 오답일 경우 "오답!" 팝업 띄우기
-            alert('오답! 다시 생각해보세요!');
-        }
-    });
-
-    // "다시하기" 버튼 클릭 시 이벤트 리스너
-    document.getElementById('reset-game-btn').addEventListener('click', function() {
-        // 게임 초기화
-        resetGame();
-    });
-
-    // 게임 초기화 함수
-    function resetGame() {
-        // 페이지 초기화
-        document.getElementById('order-display').style.display = 'none';
-        document.getElementById('ingredients-display').style.display = 'none';
-        document.getElementById('burger-display').style.display = 'none';
-        document.getElementById('button-group').style.display = 'none';
-        document.getElementById('start-game-btn').style.display = 'inline-block';
-        // 입력값 초기화
-        document.getElementById('burger-input').value = '';
-        // "다시하기" 버튼 숨김
-        document.getElementById('reset-game-btn').style.display = 'none';
     }
 </script>
 </body>
