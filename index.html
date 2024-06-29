@@ -37,6 +37,25 @@
             border-radius: 5px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
+        .btn-container {
+            margin-top: 3px;
+        }
+        .ingredient-img {
+            width: 150px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+        #burger-dropzone {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+        ul.no-bullets {
+            list-style-type: none;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -56,22 +75,13 @@
 <!-- 순서 디스플레이 블록 -->
 <div id="order-display" class="order-display">
     <h3>햄버거 재료 순서</h3>
-    <ul>
-        <li>빵</li>
-        <li>야채</li>
-        <li>고기</li>
-        <li>빵</li>
-    </ul>
+    <ul class="no-bullets" id="order-list"> </ul>
 </div>
 
 <!-- 재료 디스플레이 블록 -->
 <div id="ingredients-display" class="ingredients-display">
     <h3>주어진 재료</h3>
-    <!-- 재료 쌓기 및 이전 버튼 -->
-    <div class="text-center mt-3">
-        <button id="stack-ingredients-btn" class="btn btn-primary mr-2">재료 쌓기</button>
-        <button id="prev-ingredients-btn" class="btn btn-secondary">이전</button>
-    </div>
+    <ul class="no-bullets"></ul>
 </div>
 
 <!-- 햄버거 디스플레이 블록 -->
@@ -79,7 +89,10 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <h2>햄버거</h2>
-            <!-- 사용자가 직접 재료를 클릭 or 드래그하면서 햄버거를 만들 수 있도록 기능 추가 예정 -->
+            <div id="burger-dropzone" style="border: 1px dashed #ccc; padding: 10px; display: flex; flex-direction: column;">
+                <!-- 재료를 드롭할 수 있는 영역 -->
+                <p id="drop-info">여기에 재료를 드래그 앤 드롭하세요!</p>
+            </div>
         </div>
     </div>
 </div>
@@ -130,6 +143,10 @@
 
     // 정답을 전역 변수로 선언
     let answer;
+    let randomIngredients = [];
+    // 현재 화면에 표시된 재료의 인덱스를 저장하는 변수
+    let currentIndex = -1;
+    const fixedIngredients = ['빵', '빵', '야채', '고기', '빵', '빵']; // for test
 
     // "만들어보자!" 버튼 클릭 시 이벤트 리스너
     document.getElementById('start-game-btn').addEventListener('click', function() {
@@ -142,29 +159,66 @@
         // "만들어보자!" 버튼은 숨김
         this.style.display = 'none';
 
+        // 햄버거 재료 순서 생성
+        const burgerOrder = generateBurgerOrder();
+
+        // 햄버거 재료 순서를 HTML에 표시
+        const orderDisplay = document.getElementById('order-display').querySelector('ul');
+        orderDisplay.innerHTML = '';
+        burgerOrder.forEach(ingredient => {
+            const imgSrc = getImageSrc(ingredient);
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = ingredient;
+            img.classList.add('ingredient-img');
+            li.appendChild(img);
+            orderDisplay.appendChild(li);
+        });
+
         // 임의의 재료를 생성하기 위한 재료 목록
         const ingredientsList = ['빵', '야채', '고기'];
         // 임의의 개수(6~20개)의 재료 생성
         const numIngredients = Math.floor(Math.random() * 15) + 6; // 6부터 20까지의 랜덤한 개수
-        const randomIngredients = [];
+        randomIngredients = [];
         for (let i = 0; i < numIngredients; i++) {
             // 임의의 재료 선택
             const randomIndex = Math.floor(Math.random() * ingredientsList.length);
             randomIngredients.push(ingredientsList[randomIndex]);
         }
-        // 생성된 재료를 HTML에 표시
-        const ingredientsDisplay = document.getElementById('ingredients-display');
-        ingredientsDisplay.innerHTML = '<h3>주어진 재료</h3><ul>';
-        randomIngredients.forEach(ingredient => {
-            ingredientsDisplay.innerHTML += `<li>${ingredient}</li>`;
-        });
-        ingredientsDisplay.innerHTML += '</ul>';
+        // 복사본 만들기
+        // ingredientsCopy = randomIngredients.slice(); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ingredientsCopy = fixedIngredients.slice();
+
+        // 생성된 재료를 HTML에 표시 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+        const ingredientsDisplay = document.getElementById('ingredients-display').querySelector('ul');
+        ingredientsDisplay.innerHTML = '';
+
+        // ingredientsCopy 배열을 역순으로 반복하여 각 재료 이미지를 추가
+        for (let i = ingredientsCopy.length - 1; i >= 0; i--) {
+            const ingredient = ingredientsCopy[i];
+            const imgSrc = getImageSrc(ingredient);
+            const li = document.createElement('li');
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = ingredient;
+            img.classList.add('ingredient-img', 'draggable');
+            img.setAttribute('draggable', false);
+            li.appendChild(img);
+            ingredientsDisplay.appendChild(li);
+        }
+        
+        // randomIngredients.forEach(ingredient => {
+        //     ingredientsDisplay.innerHTML += `<li>${ingredient}</li>`;
+        // });
+        // ingredientsDisplay.innerHTML += '</ul>';
         
         // 재료 표시 블록 보이도록 설정
         ingredientsDisplay.style.display = 'block';
 
-        // 알고리즘을 사용하여 햄버거를 만들 수 있는 횟수 계산
-        answer = solution(randomIngredients);
+        // 알고리즘을 사용하여 햄버거를 만들 수 있는 횟수 계산  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // answer = solution(randomIngredients);
+        answer = solution(fixedIngredients);
     });
 
     // 폼 제출 시 이벤트 리스너
@@ -189,21 +243,174 @@
                 document.querySelector('button[type="submit"]').innerText = '제작';
                 // "다시하기" 버튼 표시
                 document.getElementById('reset-game-btn').style.display = 'inline-block';
-                // '재료 쌓기' 버튼과 '이전' 버튼 표시
-                document.getElementById('stack-ingredients-btn').style.display = 'inline-block';
-                document.getElementById('prev-ingredients-btn').style.display = 'inline-block';
-                }
+                // 재료 쌓기 및 이전 버튼 표시
+                const ingredientsDisplay = document.getElementById('ingredients-display');
+                Array.from(ingredientsDisplay.children).forEach(child => {
+                    child.style.display = 'none';
+                });
+                ingredientsDisplay.innerHTML = '<h3>주어진 재료</h3><ul class="no-bullets"></ul>';
+                ingredientsDisplay.innerHTML += `
+                    <div class="btn-container">
+                        <button id="add-ingredient-btn" class="btn btn-primary mt-3">재료 쌓기</button>
+                        <button id="prev-ingredient-btn" class="btn btn-secondary mt-3">이전</button>
+                    </div>
+                `;
+
+                // 현재 화면에 표시된 재료의 인덱스를 저장하는 변수 초기화
+                currentIndex = -1;
+                
+                // "재료 추가" 버튼 클릭 시 이벤트 리스너
+                document.getElementById('add-ingredient-btn').addEventListener('click', function(event) {
+                    const ingredientsDisplay = document.getElementById('ingredients-display').querySelector('ul');
+                    if (currentIndex < ingredientsCopy.length - 1) { // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+                        currentIndex++;
+                        const ingredient = ingredientsCopy[currentIndex];
+                        const imgSrc = getImageSrc(ingredient);
+                        const newIngredientElement = document.createElement('li');
+                        newIngredientElement.innerHTML = `<img src="${imgSrc}" alt="${ingredient}" class="ingredient-img draggable" draggable="true">`;
+                        ingredientsDisplay.insertBefore(newIngredientElement, ingredientsDisplay.firstChild);
+                        setTopIngredientDraggable(); // 맨 위 재료만 draggable 설정
+                    }
+                });
+                
+                // "이전" 버튼 클릭 시 이벤트 리스너
+                document.getElementById('prev-ingredient-btn').addEventListener('click', function(event) {
+                    const ingredientsDisplay = document.getElementById('ingredients-display').querySelector('ul');
+                    if (currentIndex > -1) {
+                        ingredientsDisplay.firstChild.remove();
+                        currentIndex--;
+                        setTopIngredientDraggable(); // 맨 위 재료만 draggable 설정
+                    }
+                });
+            }
         } else {
             // 오답일 경우 "오답!" 팝업 띄우기
             alert('오답! 다시 생각해보세요!');
         }
     });
 
-    // "다시하기" 버튼 클릭 시 이벤트 리스너
-    document.getElementById('reset-game-btn').addEventListener('click', function() {
-        // 게임 초기화
-        resetGame();
+    // 햄버거 재료 순서를 생성하는 함수
+    function generateBurgerOrder() {
+        const maxLength = 7;
+        const ingredients = ['고기', '야채'];
+        const order = ['빵']; // 맨 위에 빵 추가
+
+        // 맨 위와 맨 아래를 제외한 중간 부분의 길이를 결정
+        const middleLength = Math.floor(Math.random() * (maxLength - 2)) + 1; // 1 ~ (maxLength - 2) 범위의 길이
+
+        // 중간 부분에 고기와 야채를 랜덤하게 추가
+        for (let i = 0; i < middleLength; i++) {
+            const randomIndex = Math.floor(Math.random() * ingredients.length);
+            order.push(ingredients[randomIndex]);
+        }
+
+        order.push('빵'); // 맨 아래에 빵 추가
+        return order;
+    }
+
+
+    // 드래그 존 정의
+    const burgerDropzone = document.getElementById('burger-dropzone');
+
+    // 드래그 시작 이벤트
+    document.addEventListener('dragstart', function(event) {
+        if (event.target.classList.contains('draggable')) {
+            event.target.classList.add('dragging');
+        }
     });
+
+    // 드래그 종료 이벤트
+    document.addEventListener('dragend', function(event) {
+        if (event.target.classList.contains('draggable')) {
+            event.target.classList.remove('dragging');
+        }
+    });
+
+    // 드롭존에 드래그된 요소가 들어왔을 때 이벤트
+    burgerDropzone.addEventListener('dragover', function(event) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        this.style.border = '2px dashed #000';
+    });
+
+    // 드롭존을 떠날 때 이벤트
+    burgerDropzone.addEventListener('dragleave', function(event) {
+        this.style.border = '1px dashed #ccc';
+    });
+
+    // 드롭 이벤트 핸들러
+    burgerDropzone.addEventListener('drop', function(event) {
+        event.preventDefault();
+        this.style.backgroundColor = '';
+
+        const draggedImg = document.querySelector('.dragging');
+        if (draggedImg) {
+
+            // 드롭된 위치에 이미지 추가
+            this.insertBefore(draggedImg, this.firstChild);
+
+            // 드롭 안내 문구 숨기기
+            document.getElementById('drop-info').style.display = 'none';
+
+            // 주어진 재료에서 해당 재료를 복사본 배열에서 삭제
+            if (currentIndex > 0) {
+                ingredientsCopy.splice(currentIndex, 1);
+                currentIndex--;
+            }
+
+            // 주어진 재료에서 화면에서 해당 재료 숨기기
+            const ingredientsDisplay = document.getElementById('ingredients-display').querySelector('ul');
+            const ingredientItem = ingredientsDisplay.firstChild;
+            if (ingredientItem) {
+                ingredientItem.remove();
+            }
+
+            // 맨 위 재료만 드래그 가능하게 설정
+            setTopIngredientDraggable();
+            
+            // 원래대로 스타일 변경
+            this.style.border = '1px dashed #ccc';
+        }
+    });
+
+    // 이미지 로딩 함수
+    function getImageSrc(ingredient) {
+        switch (ingredient) {
+            case '빵':
+                return 'ingredients/bun.jpg';
+            case '고기':
+                return 'ingredients/patty.jpg';
+            case '야채':
+                return 'ingredients/vegetable.jpg';
+            default:
+                return '';
+        }
+    }
+
+    // 순서 디스플레이 블록의 <ul> 요소를 선택
+    const orderList = document.getElementById('order-list');
+
+    // 순서 디스플레이의 각 <li> 요소에 대해 이미지로 변경
+    for (let i = 0; i < orderList.children.length; i++) {
+        const textIngredient = orderList.children[i].textContent.trim();
+        const imgSrc = getImageSrc(textIngredient);
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = textIngredient;
+        img.classList.add('ingredient-img');
+        orderList.children[i].textContent = ''; // 기존 텍스트 제거
+        orderList.children[i].appendChild(img); // 이미지 추가
+    }
+
+    // 맨 위 재료만 드래그 가능하게 설정하는 함수
+    function setTopIngredientDraggable() {
+        const ingredientsDisplay = document.getElementById('ingredients-display').querySelector('ul');
+        const allIngredients = ingredientsDisplay.querySelectorAll('li .ingredient-img');
+        allIngredients.forEach((ingredient, index) => {
+            ingredient.setAttribute('draggable', index === 0); // 맨 위 재료만 draggable true로 설정
+        });
+    }
+
 
     // 게임 초기화 함수
     function resetGame() {
@@ -213,45 +420,49 @@
         document.getElementById('burger-display').style.display = 'none';
         document.getElementById('button-group').style.display = 'none';
         document.getElementById('start-game-btn').style.display = 'inline-block';
-        // 입력값 초기화
-        document.getElementById('burger-input').value = '';
+
+        // 기존 입력 필드 삭제
+        const burgerInput = document.getElementById('burger-input');
+        if (burgerInput) {
+            burgerInput.remove();
+        }
+
+        // 새 입력 필드 추가
+        const newBurgerInput = document.createElement('input');
+        newBurgerInput.type = 'text';
+        newBurgerInput.className = 'form-control';
+        newBurgerInput.id = 'burger-input';
+        newBurgerInput.placeholder = '햄버거 개수를 입력하세요.';
+        const formGroup = document.querySelector('.form-group');
+        formGroup.appendChild(newBurgerInput);
+
+        // 레이블 및 버튼 텍스트 초기화
+        document.querySelector('label[for="burger-input"]').innerText = '만들 수 있는 햄버거의 개수는 몇 개인가요?';
+        document.querySelector('button[type="submit"]').innerText = '확인';
+
         // "다시하기" 버튼 숨김
         document.getElementById('reset-game-btn').style.display = 'none';
+
+        // 재료 배열 초기화
+        randomIngredients = [];
+
+        // 정답 초기화
+        answer = null;
+
+        // 결과 표시 초기화
+        document.getElementById('result').innerText = '';
+
+        // 햄버거 디스플레이 블록 초기화
+        const burgerDropzone = document.getElementById('burger-dropzone');
+        burgerDropzone.innerHTML = '<p id="drop-info">여기에 재료를 드래그 앤 드롭하세요!</p>';
+
+        // "재료 쌓기" 버튼과 "이전" 버튼 숨기기
+        document.getElementById('add-ingredient-btn').style.display = 'none';
+        document.getElementById('prev-ingredient-btn').style.display = 'none';
     }
 
-    // 사용자가 직접 햄버거를 만들 수 있는 기능(함수로 정의함)
-    function making() {
-        // "주어진 재료" 메뉴의 각 재료 요소에 대해 drag 이벤트 리스너 추가
-        const ingredientsListItems = document.querySelectorAll('#ingredients-display li');
-        ingredientsListItems.forEach(item => {
-            item.draggable = true;
-            item.addEventListener('dragstart', dragStart);
-        });
-
-        // "햄버거" 블록에 drop 이벤트 리스너 추가
-        const burgerDisplay = document.getElementById('burger-display');
-        burgerDisplay.addEventListener('drop', drop);
-        burgerDisplay.addEventListener('dragover', dragOver);
-    }
-
-    // "햄버거" 블록에 drop 이벤트가 발생했을 때 실행되는 함수
-    function drop(event) {
-        event.preventDefault();
-        const data = event.dataTransfer.getData('text');
-        event.target.innerHTML = ''; // "햄버거" 블록 내용 비우기
-        event.target.appendChild(document.getElementById(data)); // 해당 재료 추가
-    }
-
-    // "햄버거" 블록 위에 다른 요소를 올려놓았을 때의 이벤트 처리 함수
-    function dragOver(event) {
-        event.preventDefault();
-    }
-
-    // "주어진 재료" 메뉴에서 재료를 drag하는 이벤트 처리 함수
-    function dragStart(event) {
-        event.dataTransfer.setData('text', event.target.id);
-        event.target.style.display = 'none'; // 해당 재료 숨기기
-    }
+    // "다시하기" 버튼 클릭 시 이벤트 리스너
+    document.getElementById('reset-game-btn').addEventListener('click', resetGame); // 게임 초기화
 </script>
 </body>
 </html>
